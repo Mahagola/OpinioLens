@@ -5,13 +5,24 @@ function CommentAnalyzer(){
     const [comments, setComments]=useState([]);
     const fetchComments=async()=>{
         try{
-            const apiKey='your api key';
-            const vdoId='your vdo id'; //need to write extract video id function to extract id
-            const apiUrl = `https://www.googleapis.com/youtube/v3/commentThreads?part=snippet&videoId=${vdoId}&key=${apiKey}`;
-            const response=await fetch(apiUrl);
-            const data=await response.json();
-            const newComments=data.items.map((items,index)=>items.snippet.topLevelComment.snippet.textDisplay);
-            setComments(newComments);
+            const apiKey='API key here...';
+            const vdoId='zfybpdHg3hg'; //need to write extract video id function to extract id
+            let nextPgToken='';
+            let allComments = [];
+            do{
+                const apiUrl = `https://www.googleapis.com/youtube/v3/commentThreads?part=snippet&pageToken=${nextPgToken}&videoId=${vdoId}&order=relevance&key=${apiKey}`;
+                const response=await fetch(apiUrl);
+                const data=await response.json();
+                if (!data.items) {
+                    console.error('No "items" property in API response:', data);
+                    break; // Exit the loop if there are no more items
+                  }
+            
+                const newComments = data.items.map((item) => item.snippet.topLevelComment.snippet.textOriginal);
+                allComments = [...allComments, ...newComments];
+                nextPgToken = data.nextPageToken;
+                setComments(allComments);
+            }while(nextPgToken)
         }catch(error){
             console.error("error fetching comments", error);
         }
@@ -30,14 +41,14 @@ function CommentAnalyzer(){
             <div>
                 <h2>Comments List</h2>
                 <ul>
-                    {
-                        comments.map((comment,index)=>{
-                            <li key={index}>{comment}</li>
-                        })
-                    }
+                    {comments.map((comment, index) => (
+                        <li key={index}>{comment}</li>
+                    ))}
                 </ul>
             </div>
         </div>
     );
 }
 export default CommentAnalyzer
+// to do : 1) reset whole function when user enters a new url
+        // 2) categorize comments through open AI 
